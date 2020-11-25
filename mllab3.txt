@@ -1,0 +1,120 @@
+import csv
+import math
+import random
+def entropy(attributes,data,tar,attr):
+sum=0;
+ent=0
+freq={}
+for entry in data:
+if entry[-1]==tar:
+pass
+elif entry[-1] in freq:
+freq[entry[-1]]+=1
+else:
+freq[entry[-1]]=1
+for item in freq.keys():
+sum+=freq[item]
+for item in freq.keys():
+val_prob=freq[item]/sum
+ent+=-val_prob*math.log(val_prob,2)
+return ent,item
+def info_gain(attributes,data,tar,attr):
+sum=0;
+freq={}
+j=0
+entropy_sum=0
+for i in attributes:
+if i==attr:
+break
+else:
+j=j+1
+for entry in data:
+if entry[j]==attr:
+pass
+elif entry[j] in freq:
+freq[entry[j]]+= 1
+else:
+freq[entry[j]]=1
+for item in freq.keys():
+sum+=freq[item]
+for val in freq.keys():
+val_prob=freq[val]/(sum)
+dataSubset = [alp for alp in data if alp[j] == val]
+[c,d]=entropy(attributes,dataSubset,tar,attr)
+entropy_sum=entropy_sum+val_prob * c
+[a,b]=entropy(attributes,data,tar,attr)
+return (a,a-entropy_sum, b)
+def best_attr(attributes,data,tar):
+maxgain=0
+for attr in attributes:
+[a,gain,b]=info_gain(attributes,data,tar,attr)
+if a==0:
+return (a,b)
+if gain>maxgain:
+maxgain=gain
+best=attr
+return (a,best)
+def build_tree(attributes,data,tar):
+[a, best]= best_attr(attributes,data,tar)
+tree = {b
+est:{}}
+if a==0:
+return [best,a]
+#
+best_vals=[]
+i=attributes.index(best)
+for entry in data:
+if entry[i] not in attributes:
+if entry[i] not in best_vals:
+best_vals.append(entry[i])
+newAttr = attributes[:]
+newAttr.remove(best)
+su=0;
+for entry in best_vals:
+new_data=[[]]
+for ent in data:
+new_row=[]
+if ent[i]==entry:
+for j in ent:
+if j!=entry:
+new_row.append(j)
+new_data.append(new_row)
+new_data.remove([])
+[subtree,a] = build_tree( newAttr, new_data, tar)
+tree[best][entry]=subtree
+su=su+a
+if su==0:
+return [tree,su]
+data = []
+#load file
+with open("/home/user/PN/weather.csv") as tsv:
+for line in csv.reader(tsv):
+data.append(tuple(line))
+tar=data[0][-1]
+attributes=['outlook','temperature','humidity','wind']
+[tree,z]=build_tree(attributes,data,tar)
+print(tree)
+results = []
+test_set = [('rainy','mild','high','strong')]
+for entry in test_set:
+tempDict = tree.copy()
+result = ""
+while(isinstance(tempDict, dict)):
+child=[]
+nodeVal=next(iter(tempDict))
+child=tempDict[next(iter(tempDict))].keys()
+tempDict = tempDict[next(iter(tempDict))]
+index = attributes.index(nodeVal)
+value = entry[index]
+if(value in tempDict.keys()):
+result = tempDict[value]
+tempDict = tempDict[value]
+
+else:
+result = "Null"
+
+break
+
+if result != "Null":
+results.append(result == entry[-1])
+print(result)
